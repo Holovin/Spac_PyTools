@@ -3,9 +3,8 @@ import math
 import re
 from math import floor
 
-from dict_converter import Dict2Obj
+from helpers.dict_converter import Dict2Obj
 from pymongo import MongoClient
-
 from config import Config
 from helpers.object import Object
 

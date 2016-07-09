@@ -4,25 +4,27 @@ import requests
 
 from config import Config
 from helpers.message import Msg
+from parsers.json_api import JsonApi
 
 
-class Downloader:
+class Network:
+    # api methods
     URI_API_AUTH = "http://spaces.ru/api/auth/"
     URI_API_SEARCH = "http://spaces.ru/neoapi/users/"
 
+    # raw html-parse methods
     URI_RAW_USER_HIST = "http://spaces.ru/mysite/loghist/?name="
     URI_RAW_USER_SESS = "http://spaces.ru/mysite/sessions_list/?name="
     URI_RAW_COMM_USERS = "http://spaces.ru/comm/users/"
 
-    parser = None
     session = None
     last_answer = ""
 
-    def __init__(self, parser):
-        self.parser = parser
+    def __init__(self):
         self.clean()
         return
 
+    # core
     def get_data(self):
         return self.last_answer.text
 
@@ -35,6 +37,16 @@ class Downloader:
         logging.info("Downloader init... ok")
 
         return
+
+    def _get_cookie_value(self, name):
+        return self.session.cookies.get(name)
+
+    def get_session_sid(self):
+        return self._get_cookie_value('sid')
+
+    def get_session_ck(self):
+        # last 4 digit of sid
+        return self.get_session_sid()[-4:]
 
     def do_get(self, url):
         logging.debug("Get url: " + url)
@@ -82,8 +94,9 @@ class Downloader:
         if self.do_post(self.URI_API_AUTH, data=data) is not Msg.success_ok:
             return Msg.fatal_http
 
-        return self.parser.check_auth(self.get_data_json())
+        return JsonApi.json_check_success(self.get_data_json(), 'login')
 
+    # spec methods
     def get_user_hist(self, login):
         logging.debug("Get user history... [login = " + login + "]")
 
@@ -117,6 +130,15 @@ class Downloader:
         logging.debug("Get comm page [comm_id = " + str(comm_id) + "; page = " + str(page) + "]")
 
         if self.do_get(self.URI_RAW_COMM_USERS + '?Comm=' + str(comm_id) + '&P=' + str(page)) is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def get_comm_user_remove(self, comm_id, user_id):
+        logging.debug("Removing user [user_id = " + str(user_id) + "; comm_id = " + str(comm_id) + "]")
+
+        if self.do_get(self.URI_RAW_COMM_USERS + '?CK=' + self.get_session_ck() + '&Comm=' + str(
+                comm_id) + '&Delete=' + str(user_id)) is not Msg.success_ok:
             return Msg.fatal_http
 
         return True
