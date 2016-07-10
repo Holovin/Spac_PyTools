@@ -9,13 +9,14 @@ from parsers.json_api import JsonApi
 
 class Network:
     # api methods
-    URI_API_AUTH = "http://spaces.ru/api/auth/"
-    URI_API_SEARCH = "http://spaces.ru/neoapi/users/"
+    URI_API_AUTH = 'http://spaces.ru/api/auth/'
+    URI_API_SEARCH = 'http://spaces.ru/neoapi/users/'
 
     # raw html-parse methods
-    URI_RAW_USER_HIST = "http://spaces.ru/mysite/loghist/?name="
-    URI_RAW_USER_SESS = "http://spaces.ru/mysite/sessions_list/?name="
-    URI_RAW_COMM_USERS = "http://spaces.ru/comm/users/"
+    URI_RAW_USER_HIST = 'http://spaces.ru/mysite/loghist/?name='
+    URI_RAW_USER_SESS = 'http://spaces.ru/mysite/sessions_list/?name='
+    URI_RAW_COMM_USERS = 'http://spaces.ru/comm/users/'
+    URI_RAW_COMM_FORUM = 'http://spaces.ru/forums/'
 
     session = None
     last_answer = ""
@@ -56,7 +57,7 @@ class Network:
             logging.debug("Result url (" + str(self.last_answer.status_code) + " : " + self.last_answer.url + ")")
 
             if self.last_answer.url.lower() != url.lower():
-                logging.warning("Redirect!")
+                logging.warning("Redirect to: " + self.last_answer.url)
 
                 if 'http://spaces.ru/registration/' in self.last_answer.url.lower():
                     logging.fatal("No auth...")
@@ -139,6 +140,50 @@ class Network:
 
         if self.do_get(self.URI_RAW_COMM_USERS + '?CK=' + self.get_session_ck() + '&Comm=' + str(
                 comm_id) + '&Delete=' + str(user_id)) is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def get_comm_forum_page(self, forum_id, page):
+        logging.debug("Get forum page [forum_id = " + str(forum_id) + "]")
+
+        if self.do_get(self.URI_RAW_COMM_FORUM + '?f=' + str(forum_id) + '&tp=' + str(page)) is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def get_comm_forum_theme_remove(self, theme_id):
+        logging.debug("Remove theme [theme_id = " + str(theme_id) + "]")
+
+        if self.do_get(self.URI_RAW_COMM_FORUM + '?CK=' + self.get_session_ck() + '&dt=' + str(
+                theme_id) + '&sure=1') is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def get_comm_forum_theme_move(self, theme_id, forum_id):
+        logging.debug("Move theme [theme_id = " + str(theme_id) + "; forum_id = " + str(forum_id) + "]")
+
+        if self.do_get(self.URI_RAW_COMM_FORUM + '?CK=' + self.get_session_ck() + '&f=' + str(
+                forum_id) + '&move=' + str(theme_id)) is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def get_comm_forum_theme_close(self, theme_id):
+        logging.debug("Close theme [theme_id = " + str(theme_id) + "]")
+
+        if self.do_get(self.URI_RAW_COMM_FORUM + '?CK=' + self.get_session_ck() + '&ct=' + str(
+                theme_id)) is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def get_comm_forum_theme_open(self, theme_id):
+        logging.debug("Open theme [theme_id = " + str(theme_id) + "]")
+
+        if self.do_get(self.URI_RAW_COMM_FORUM + '?CK=' + self.get_session_ck() + '&ot=' + str(
+                theme_id)) is not Msg.success_ok:
             return Msg.fatal_http
 
         return True

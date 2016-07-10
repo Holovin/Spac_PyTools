@@ -1,5 +1,6 @@
 import logging
 import re
+from enum import Enum
 
 from lxml import html
 
@@ -9,9 +10,18 @@ from models.session import Session
 
 
 class Parse:
+    class ForumThemesMode(Enum):
+        ALL = 0
+        ONLY_OPEN = 1
+        ONLY_CLOSED = 2
+
     re_ip_place = re.compile('((.+)\s\(((\d{1,3}\.*){1,4}))')
     re_ip = re.compile('((\d{1,3}\.*){1,4})')
     re_delete_id = re.compile('Delete=(\d+)')
+
+    re_theme_move_id = re.compile('move=(\d+)')     # move
+    re_theme_ct_id = re.compile('ct=(\d+)')         # close
+    re_theme_ot_id = re.compile('ot=(\d+)')         # open
 
     spac_date = None
 
@@ -133,4 +143,30 @@ class Parse:
         if result_raw is not None:
             return result_raw.group(1)
 
+        logging.warning("Bad parse: " + text)
         return ""
+
+    def text_url_param_theme_id(self, text, regex):
+        result_raw = regex.search(text)
+
+        if result_raw is not None:
+            return result_raw.group(1)
+
+        logging.warning("Bad parse: " + text)
+        return ""
+
+    def xpath_comm_forum_themes_id(self, content, mode):
+        tree = html.fromstring(content)
+        logging.debug("DOM created...")
+
+        modes = ['Переместить', 'Закрыть', 'Открыть']
+        m_f = [self.re_theme_move_id, self.re_theme_ct_id, self.re_theme_ot_id]
+
+        themes_raw = tree.xpath('//div[@id="main"]//a[contains(text(), "' + modes[mode.value] + '")]/@href')
+        themes = []
+
+        for theme in themes_raw:
+            theme_raw = self.text_url_param_theme_id(theme, m_f[mode.value])
+            themes.append(theme_raw)
+
+        return themes

@@ -1,10 +1,8 @@
 #!/usr/bin/python
 
 import logging
-from time import sleep
 
 from config import Config
-from helpers.message import Msg
 from network import Network
 from parsers.parse import Parse
 from parsers.spac_date import SpacDate
@@ -18,36 +16,30 @@ def main():
     p = Parse(sd)
     n = Network()
 
-    # protection
-    sec = 100
-    logging.info("Starting in " + str(sec) + " seconds...")
-    sleep(sec)
-
     # auth
     if not n.auth(Config.USER_NAME, Config.USER_PASSWORD):
         logging.fatal("Auth error...")
         exit()
 
-    # comm_remove_users
+    # comm_forum_themes_moveremove.py
     logging.info("Init ok... Start parsing... [id = " + str(Config.COMM_ID) + "]")
 
     # reverse for correct removing
     for i in range(Config.END_PAGE, Config.START_PAGE, -1):
         logging.info("Current page: " + str(i) + "...")
 
-        if not n.get_comm_users_page(Config.COMM_ID, i):
-            logging.fatal("Get user page error")
+        if not n.get_comm_forum_page(Config.FORUM_ID, i):
+            logging.fatal("Get comm forum page error")
             exit()
 
-        users = p.xpath_comm_users_page_delete(n.get_data())
-        logging.info("Parsed users: " + str(len(users)) + " objects...")
+        themes_id = p.xpath_comm_forum_themes_id(n.get_data(), Parse.ForumThemesMode.ALL)
+        logging.info("Parsed themes: " + str(len(themes_id)) + " objects...")
 
-        for user in users:
-            if n.do_get(user) is not Msg.success_ok:
-                logging.fatal("Cant remove user [url = " + user + "]")
-                exit()
+        for theme_id in themes_id:
+            if not n.get_comm_forum_theme_remove(theme_id):
+                logging.error("Error at theme: " + str(theme_id))
 
-            logging.info("User removed, id: " + p.text_url_param_delete(user))
+            logging.info("Theme processed: " + str(theme_id))
 
     logging.info("--- APP END ---")
     return
