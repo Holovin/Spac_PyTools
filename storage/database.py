@@ -195,13 +195,13 @@ class Database:
                 }
             })
 
-            for u_ip in ip_match_users:
-                if u_ip['name'] not in d:
-                    d[u_ip['name']] = 0
+            for u in ip_match_users:
+                if u['name'] not in d:
+                    d[u['name']] = 0
 
-                for sess in u_ip[self.SESSION_KEY]:
+                for sess in u[self.SESSION_KEY]:
                     if ip == sess[self.IP_KEY]:
-                        d[u_ip['name']] += Config.STAT_IP_WEIGHT
+                        d[u['name']] += Config.STAT_IP_WEIGHT
 
         for ip_place in unique_ip_place:
             ip_place_match_users = self.db[Config.TABLE_NAME_USERS].find({
@@ -216,13 +216,17 @@ class Database:
                 }
             })
 
-            for u_ip_place in ip_place_match_users:
-                if u_ip_place['name'] not in d:
-                    d[u_ip_place['name']] = 0
+            for u in ip_place_match_users:
+                if u['name'] not in d:
+                    d[u['name']] = 0
 
-                for sess in u_ip_place[self.SESSION_KEY]:
-                    if ip_place == sess[self.IPPLACE_KEY]:
-                        d[u_ip_place['name']] += 0  # ip very valuable!
+                unique_user_ipplace = set()
+                for sess in u[self.SESSION_KEY]:
+                    unique_user_ipplace.add(sess[self.IPPLACE_KEY])
+
+                for uuipp_item in unique_user_ipplace:
+                    if ip_place == uuipp_item:
+                        d[u['name']] += Config.STAT_IPPLACE_WEIGHT
 
         return d
 
