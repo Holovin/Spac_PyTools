@@ -197,12 +197,13 @@ class Network:
 
         return True
 
-    def post_user_blogs_access_change(self, blog_id, access_value):
+    def post_user_blogs_access_change(self, blog_id, access_value, password=""):
         logging.debug("User blog access change...")
 
         data = {
             'M_' + blog_id + '_9': access_value,
             'cfms': 'Сохранить',
+            'pass_' + blog_id + '_9': password,
             'CK': self.get_session_ck()
         }
 
