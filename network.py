@@ -15,6 +15,7 @@ class Network:
     # raw html-parse methods
     URI_RAW_USER_HIST = 'http://spaces.ru/mysite/loghist/?name='
     URI_RAW_USER_SESS = 'http://spaces.ru/mysite/sessions_list/?name='
+    URI_RAW_USER_BLOGS = 'http://spaces.ru/diary/'
     URI_RAW_COMM_USERS = 'http://spaces.ru/comm/users/'
     URI_RAW_COMM_FORUM = 'http://spaces.ru/forums/'
 
@@ -184,6 +185,28 @@ class Network:
 
         if self.do_get(self.URI_RAW_COMM_FORUM + '?CK=' + self.get_session_ck() + '&ot=' + str(
                 theme_id)) is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def get_user_blogs_page(self, login, page):
+        logging.debug("User blogs page [login = " + str(login) + "; page = " + "]")
+
+        if self.do_get(self.URI_RAW_USER_BLOGS + 'view/?name=' + login + '&P=' + str(page)) is not Msg.success_ok:
+            return Msg.fatal_http
+
+        return True
+
+    def post_user_blogs_access_change(self, blog_id, access_value):
+        logging.debug("User blog access change...")
+
+        data = {
+            'M_' + blog_id + '_9': access_value,
+            'cfms': 'Сохранить',
+            'CK': self.get_session_ck()
+        }
+
+        if self.do_post(self.URI_RAW_USER_BLOGS + 'editaccess/?id=' + blog_id, data=data) is not Msg.success_ok:
             return Msg.fatal_http
 
         return True

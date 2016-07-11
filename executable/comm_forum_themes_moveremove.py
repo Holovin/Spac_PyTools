@@ -36,7 +36,8 @@ def main():
         logging.info("Parsed themes: " + str(len(themes_id)) + " objects...")
 
         for theme_id in themes_id:
-            if not n.get_comm_forum_theme_remove(theme_id):
+            if not n.get_comm_forum_theme_move(theme_id, Config.FORUM_MOVE_TO):
+            #if not n.get_comm_forum_theme_remove(theme_id):
                 logging.error("Error at theme: " + str(theme_id))
 
             logging.info("Theme processed: " + str(theme_id))

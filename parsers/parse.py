@@ -1,6 +1,6 @@
 import logging
 import re
-from enum import Enum
+from enum import Enum, unique
 
 from lxml import html
 
@@ -10,18 +10,30 @@ from models.session import Session
 
 
 class Parse:
+    @unique
     class ForumThemesMode(Enum):
         ALL = 0
         ONLY_OPEN = 1
         ONLY_CLOSED = 2
 
+    @unique
+    class BlogAccessMode(Enum):
+        ALL =               {'int': 0, 'string': 'Доступно всем'}
+        ONLY_ME =           {'int': 1, 'string': 'Доступно только мне'}
+        MY_FRIENDS =        {'int': 2, 'string': 'Доступно только друзьям'}
+        MY_FRIENDS_DOUBLE = {'int': 3, 'string': 'Доступно друзьям и их друзьям'}
+        PASSWORD =          {'int': 4, 'string': 'Доступно по паролю'}
+        USER_LIST =         {'int': 5, 'string': 'Доступно по списку доступа'}
+
     re_ip_place = re.compile('((.+)\s\(((\d{1,3}\.*){1,4}))')
     re_ip = re.compile('((\d{1,3}\.*){1,4})')
     re_delete_id = re.compile('Delete=(\d+)')
 
-    re_theme_move_id = re.compile('move=(\d+)')     # move
-    re_theme_ct_id = re.compile('ct=(\d+)')         # close
-    re_theme_ot_id = re.compile('ot=(\d+)')         # open
+    re_theme_move_id = re.compile('move=(\d+)')  # move
+    re_theme_ct_id = re.compile('ct=(\d+)')  # close
+    re_theme_ot_id = re.compile('ot=(\d+)')  # open
+
+    re_blog_id = re.compile('id=(\d+)')
 
     spac_date = None
 
@@ -146,7 +158,8 @@ class Parse:
         logging.warning("Bad parse: " + text)
         return ""
 
-    def text_url_param_theme_id(self, text, regex):
+    @staticmethod
+    def text_url_param_theme_id(text, regex):
         result_raw = regex.search(text)
 
         if result_raw is not None:
@@ -170,3 +183,31 @@ class Parse:
             themes.append(theme_raw)
 
         return themes
+
+    def text_url_param_blog_id(self, text):
+        result_raw = self.re_blog_id.search(text)
+
+        if result_raw is not None:
+            return result_raw.group(1)
+
+        logging.warning("Bad parse: " + text)
+        return ""
+
+    def xpath_user_blog_page(self, content, access_level=BlogAccessMode.ALL, invert_access_level=False):
+        tree = html.fromstring(content)
+        logging.debug("DOM created...")
+
+        flag = ""
+        if invert_access_level:
+            flag = "not"
+
+        blog_list = tree.xpath(
+            '//div[@id="main"]//div[contains(@class, "widgets-group") and .//span[contains(@class, "ico_mode") and (' +
+            flag + '(contains(@title, "' + access_level.value['string'] +
+            '")))]]//td//a[contains(@href, "/read/")]/@href')
+
+        blogs_id = []
+        for blog in blog_list:
+            blogs_id.append(self.text_url_param_blog_id(blog))
+
+        return blogs_id
