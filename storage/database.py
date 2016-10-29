@@ -141,19 +141,19 @@ class Database:
                 }
             })
 
-            for u in sess_match_users:
-                if u['name'] not in d:
-                    d[u['name']] = 0
+            for u_ip_place in sess_match_users:
+                if u_ip_place['name'] not in d:
+                    d[u_ip_place['name']] = 0
 
                 unique_user_sess_ua = set()
-                for sess in u[self.SESSION_KEY]:
+                for sess in u_ip_place[self.SESSION_KEY]:
                     unique_user_sess_ua.add(sess[self.USERAGENT_KEY])
 
                 for uusu_item in unique_user_sess_ua:
                     if ua == uusu_item:
-                        d[u['name']] += rating
+                        d[u_ip_place['name']] += rating
                     elif Config.SEARCH_DEC:
-                        d[u['name']] -= floor(rating / Config.SEARCH_DEC_DIV)
+                        d[u_ip_place['name']] -= floor(rating / Config.SEARCH_DEC_DIV)
 
             # hist #
             hist_match_users = self.db[Config.TABLE_NAME_USERS].find({
@@ -168,19 +168,19 @@ class Database:
                 }
             })
 
-            for u in hist_match_users:
-                if u['name'] not in d:
-                    d[u['name']] = 0
+            for u_ip_place in hist_match_users:
+                if u_ip_place['name'] not in d:
+                    d[u_ip_place['name']] = 0
 
                 unique_user_hist_ua = set()
-                for hist in u[self.HISTORY_KEY]:
+                for hist in u_ip_place[self.HISTORY_KEY]:
                     unique_user_hist_ua.add(hist[self.USERAGENT_KEY])
 
                 for uuhu_item in unique_user_hist_ua:
                     if ua == uuhu_item:
-                        d[u['name']] += rating
+                        d[u_ip_place['name']] += rating
                     elif Config.SEARCH_DEC:
-                        d[u['name']] -= floor(rating / Config.SEARCH_DEC_DIV)
+                        d[u_ip_place['name']] -= floor(rating / Config.SEARCH_DEC_DIV)
 
         for ip in unique_ip:
             ip_match_users = self.db[Config.TABLE_NAME_USERS].find({
@@ -195,13 +195,13 @@ class Database:
                 }
             })
 
-            for u in ip_match_users:
-                if u['name'] not in d:
-                    d[u['name']] = 0
+            for u_ip_place in ip_match_users:
+                if u_ip_place['name'] not in d:
+                    d[u_ip_place['name']] = 0
 
-                for sess in u[self.SESSION_KEY]:
+                for sess in u_ip_place[self.SESSION_KEY]:
                     if ip == sess[self.IP_KEY]:
-                        d[u['name']] += Config.STAT_IP_WEIGHT
+                        d[u_ip_place['name']] += Config.STAT_IP_WEIGHT
 
         for ip_place in unique_ip_place:
             ip_place_match_users = self.db[Config.TABLE_NAME_USERS].find({
@@ -216,17 +216,17 @@ class Database:
                 }
             })
 
-            for u in ip_place_match_users:
-                if u['name'] not in d:
-                    d[u['name']] = 0
+            for u_ip_place in ip_place_match_users:
+                if u_ip_place['name'] not in d:
+                    d[u_ip_place['name']] = 0
 
                 unique_user_ipplace = set()
-                for sess in u[self.SESSION_KEY]:
+                for sess in u_ip_place[self.SESSION_KEY]:
                     unique_user_ipplace.add(sess[self.IPPLACE_KEY])
 
                 for uuipp_item in unique_user_ipplace:
                     if ip_place == uuipp_item:
-                        d[u['name']] += Config.STAT_IPPLACE_WEIGHT
+                        d[u_ip_place['name']] += Config.STAT_IPPLACE_WEIGHT
 
         return d
 
@@ -290,7 +290,8 @@ class Database:
                 'rating': f(doc_max, item['count'])
             })
 
-        result = self.db[Config.TABLE_NAME_UA_FREQ_STATS].insert(docs)
-        logging.info("Inserted: " + str(len(result)))
+        if len(docs) > 0:
+            result = self.db[Config.TABLE_NAME_UA_FREQ_STATS].insert(docs)
+            logging.info("Inserted: " + str(len(result)))
 
         return True
