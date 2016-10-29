@@ -226,7 +226,7 @@ class Database:
 
                 for uuipp_item in unique_user_ipplace:
                     if ip_place == uuipp_item:
-                        d[u_ip_place['name']] += Config.STAT_IPPLACE_WEIGHT
+                        d[u_ip_place['name']] += Config.STAT_IP_PLACE_WEIGHT
 
         return d
 
